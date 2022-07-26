@@ -19,27 +19,8 @@ struct BehaviorVarSig
     //Sig pool
     std::vector<Sig> sigPool;
 
-    static BehaviorVarSig* Get()
-    {
-        if (!single)
-            single = new BehaviorVarSig();
-        return single;
-    }
-
-    void initialize()
-    {
-        const std::string PATH = TiltedPhoques::GetPath().string() + "/behaviors";
-        std::vector<std::string> dirs = loadDirs(PATH);
-        for (auto item :dirs)
-        {
-            Sig* sig = loadSigFromDir(item);
-            if (sig)
-            {
-                sigPool.push_back(*sig);
-            }
-        }
-    }
-
+    static BehaviorVarSig* Get();
+    void initialize();
     void patch(BSAnimationGraphManager* apManager, Actor* apActor);
 
     private:
