@@ -38,6 +38,9 @@
 #include <Services/DebugService.h>
 #include <World.h>
 
+// MOD BEHAVIORS: add modded behaviors
+#include <ModCompat/BehaviorVarSig.h>
+
 using ScopedReferencesOverride = ScopedOverride<TESObjectREFR>;
 thread_local uint32_t ScopedReferencesOverride::s_refCount = 0;
 
@@ -171,6 +174,17 @@ void TESObjectREFR::SaveAnimationVariables(AnimationVariables& aVariables) const
 
             auto pDescriptor =
                 AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
+
+            //MOD BEHAVIORS: add modded behaviors
+            //descriptor not found, could be a modded graph
+            if (!pDescriptor)
+            {
+                BehaviorVarSig::Get()->patch(pManager, pActor);
+                
+                //try to reload
+                pDescriptor = AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
+            }
+
 
             if (!pDescriptor)
                 return;
