@@ -7,12 +7,15 @@
 #include <fstream>
 #include <algorithm>
 
+#include <mutex>
 //debug
 #define BEHAVIOR_DEBUG 1
 
 #ifdef BEHAVIOR_DEBUG
 #define D(x) (spdlog::info(x))
 #endif
+
+std::mutex mutex_lock;
 
 BehaviorVarSig* BehaviorVarSig::single = nullptr;
 
@@ -43,16 +46,19 @@ void removeWhiteSpace(std::string &aString)
     //aString.erase(std::remove_if(aString.begin(), aString.end(), std::isspace), aString.end());
 }
 
-void BehaviorVarSig::patch(BSAnimationGraphManager* apManager, Actor* apActor)
+void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
 {   /////////////////////////////////////////////////////////////////////////
     // check with animation graph holder
     ////////////////////////////////////////////////////////////////////////
+#if BEHAVIOR_DEBUG
+    spdlog::info("try searching animgraph for actor {}", apActor->formID);
+#endif
     auto pExtendedActor = apActor->GetExtension();
     const AnimationGraphDescriptor* pGraph =
         AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
 
     ////////////////////////////////////////////////////////////////////////
-    // Vanilla behavior
+    // Already created
     ////////////////////////////////////////////////////////////////////////
     if (pGraph)
         return;
@@ -183,8 +189,9 @@ void BehaviorVarSig::patch(BSAnimationGraphManager* apManager, Actor* apActor)
         ////////////////////////////////////////////////////////////////////////
         //add the new graph to the var graph
         ////////////////////////////////////////////////////////////////////////
-        AnimationGraphDescriptorManager::Builder s_builder(AnimationGraphDescriptorManager::Get(), mHash, *animGrapDescriptor);
-
+        new AnimationGraphDescriptorManager::Builder(AnimationGraphDescriptorManager::Get(), mHash, *animGrapDescriptor);
+        AnimationGraphDescriptorManager::Builder build(AnimationGraphDescriptorManager::Get(), mHash,
+                                                     *animGrapDescriptor);
         ////////////////////////////////////////////////////////////////////////
         //change the actor hash? is this even necessary?
         ////////////////////////////////////////////////////////////////////////
@@ -194,7 +201,9 @@ void BehaviorVarSig::patch(BSAnimationGraphManager* apManager, Actor* apActor)
         //handle hard coded case
         ////////////////////////////////////////////////////////////////////////
         if (sig.sigName == "master")
+        {
             humanoidSig = {mHash, sig};
+        }
         else if (sig.sigName == "werewolf")
             werewolfSig = {mHash, sig};
         else if (sig.sigName == "vampire_lord")
@@ -406,4 +415,10 @@ BehaviorVarSig::Sig* BehaviorVarSig::loadSigFromDir(std::string aDir)
     result->syncIntegerVar = intVector;
 
     return result;
+}
+
+void BehaviorVarSig::patch(BSAnimationGraphManager* apManager, Actor* apActor)
+{
+    std::lock_guard<std::mutex> guard(mutex_lock);
+    _patch(apManager, apActor);
 }

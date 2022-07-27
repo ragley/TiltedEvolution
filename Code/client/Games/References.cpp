@@ -179,12 +179,13 @@ void TESObjectREFR::SaveAnimationVariables(AnimationVariables& aVariables) const
             //descriptor not found, could be a modded graph
             if (!pDescriptor)
             {
-                BehaviorVarSig::Get()->patch(pManager, pActor);
-                
-                //try to reload
-                pDescriptor = AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
-            }
 
+                spdlog::info("actor with form id {} doesnt have an animation graph", pActor->formID);
+                //BehaviorVarSig::Get()->patch(pManager, pActor);
+
+                // try to reload
+                //pDescriptor = AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
+            }
 
             if (!pDescriptor)
                 return;
@@ -252,6 +253,8 @@ void TESObjectREFR::LoadAnimationVariables(const AnimationVariables& aVariables)
 
             auto pDescriptor =
                 AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
+
+
 
             if (!pDescriptor)
             {

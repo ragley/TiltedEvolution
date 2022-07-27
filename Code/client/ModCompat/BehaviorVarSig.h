@@ -27,4 +27,5 @@ struct BehaviorVarSig
         static BehaviorVarSig *single;
         Sig* loadSigFromDir(std::string aDir);
         std::vector<std::string> loadDirs(const std::string& acPATH);
+        void _patch(BSAnimationGraphManager* apManager, Actor* apActor);
 };
