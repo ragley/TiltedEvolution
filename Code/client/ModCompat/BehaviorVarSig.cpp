@@ -15,8 +15,6 @@
 #define D(x) (spdlog::info(x))
 #endif
 
-std::mutex mutex_lock;
-
 BehaviorVarSig* BehaviorVarSig::single = nullptr;
 
 BehaviorVarSig* BehaviorVarSig::Get()
@@ -43,16 +41,14 @@ void BehaviorVarSig::initialize()
 void removeWhiteSpace(std::string &aString)
 {
     //TODO: FIX THIS GODDAMN THING
-    //aString.erase(std::remove_if(aString.begin(), aString.end(), std::isspace), aString.end());
+    //aString.erase(std::remove(aString.begin(), aString.end(), std::isspace), aString.end());
 }
 
 void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
 {   /////////////////////////////////////////////////////////////////////////
     // check with animation graph holder
     ////////////////////////////////////////////////////////////////////////
-#if BEHAVIOR_DEBUG
-    spdlog::info("try searching animgraph for actor {}", apActor->formID);
-#endif
+    uint32_t hexFormID = apActor->formID;
     auto pExtendedActor = apActor->GetExtension();
     const AnimationGraphDescriptor* pGraph =
         AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
@@ -60,11 +56,15 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
     ////////////////////////////////////////////////////////////////////////
     // Already created
     ////////////////////////////////////////////////////////////////////////
-    if (pGraph)
+    if (pGraph || failedSig.find(pExtendedActor->GraphDescriptorHash) != failedSig.end())
+    {
         return;
+    }
+        
 
 #if BEHAVIOR_DEBUG
-    spdlog::info("actor with formID 0x{} has modded animation graph. generating...", apActor->formID);
+    spdlog::info("actor with formID {:x} with hash of {} has modded behavior", hexFormID,
+                 pExtendedActor->GraphDescriptorHash);
 #endif
 
     ////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
         reverseMap.insert({(std::string)item.second, item.first});
     }
 
-#if BEHAVIOR_DEBUG
+ #if BEHAVIOR_DEBUG
     spdlog::info("known behavior variables");
     for (auto pair : dumpVar)
     {
@@ -100,13 +100,27 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
         for (std::string sigVar : sig.sigStrings)
         {
             if (reverseMap.find(sigVar) != reverseMap.end())
+            {
                 continue;
+#if BEHAVIOR_DEBUG
+                spdlog::info("{} found", sig.sigName);
+#endif
+            }
             else
             {
                 isSig = false;
                 break;
             }
         }
+        for (std::string negSigVar : sig.negSigStrings)
+        {
+            if (reverseMap.find(negSigVar) != reverseMap.end())
+            {
+                isSig = false;
+                break;
+            }
+        }
+
         ////////////////////////////////////////////////////////////////////////
         // sig not found found
         ////////////////////////////////////////////////////////////////////////
@@ -181,6 +195,9 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
         //Very hacky and shouldnt be allowed
         //This is a breach in the dev code and will not be merged
         ////////////////////////////////////////////////////////////////////////
+#if BEHAVIOR_DEBUG
+        spdlog::info("building animgraph var for {0:x}", hexFormID);
+#endif
         auto animGrapDescriptor = new AnimationGraphDescriptor({0}, {0}, {0});
         animGrapDescriptor->BooleanLookUpTable = boolVar;
         animGrapDescriptor->FloatLookupTable = floatVar;
@@ -190,8 +207,7 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
         //add the new graph to the var graph
         ////////////////////////////////////////////////////////////////////////
         new AnimationGraphDescriptorManager::Builder(AnimationGraphDescriptorManager::Get(), mHash, *animGrapDescriptor);
-        AnimationGraphDescriptorManager::Builder build(AnimationGraphDescriptorManager::Get(), mHash,
-                                                     *animGrapDescriptor);
+
         ////////////////////////////////////////////////////////////////////////
         //change the actor hash? is this even necessary?
         ////////////////////////////////////////////////////////////////////////
@@ -203,6 +219,8 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
         if (sig.sigName == "master")
         {
             humanoidSig = {mHash, sig};
+            new AnimationGraphDescriptorManager::Builder(AnimationGraphDescriptorManager::Get(), 17585368238253125375,
+                                                         *animGrapDescriptor);
         }
         else if (sig.sigName == "werewolf")
             werewolfSig = {mHash, sig};
@@ -212,8 +230,14 @@ void BehaviorVarSig::_patch(BSAnimationGraphManager* apManager, Actor* apActor)
         ////////////////////////////////////////////////////////////////////////
         //take a break buddy
         ////////////////////////////////////////////////////////////////////////
-        break;
+        return;
     }
+
+    //sig failed
+#if BEHAVIOR_DEBUG
+    spdlog::info("sig for actor {:x} failed with hash {}", hexFormID, pExtendedActor->GraphDescriptorHash);
+#endif
+    failedSig[pExtendedActor->GraphDescriptorHash] = true;
 }
 
 
@@ -298,6 +322,7 @@ BehaviorVarSig::Sig* BehaviorVarSig::loadSigFromDir(std::string aDir)
     ////////////////////////////////////////////////////////////////////////
     std::string name = "";
     std::vector<std::string> sig;
+    std::vector<std::string> negSig; 
     std::set<std::string> floatVar;
     std::set<std::string> intVar;
     std::set<std::string> boolVar;
@@ -320,10 +345,21 @@ BehaviorVarSig::Sig* BehaviorVarSig::loadSigFromDir(std::string aDir)
     while (std::getline(file1, tempString))
     {
         removeWhiteSpace(tempString);
-        sig.push_back(tempString);
+        if (tempString.find("~") != std::string::npos)
+        {
+            negSig.push_back(tempString.substr(tempString.find("~") + 1));
 #if BEHAVIOR_DEBUG
-        spdlog::info("{}:{}", name, tempString);
+            spdlog::info("~{}:{}", name, tempString.substr(tempString.find("~") +1));
 #endif
+        }         
+        else
+        {
+            sig.push_back(tempString);
+#if BEHAVIOR_DEBUG
+            spdlog::info("{}:{}", name, tempString);
+#endif
+        }
+
     }
     file1.close();
     if (sig.size() < 1)
@@ -377,7 +413,7 @@ BehaviorVarSig::Sig* BehaviorVarSig::loadSigFromDir(std::string aDir)
         while (std::getline(file4, tempString))
         {
             removeWhiteSpace(tempString);
-            floatVar.insert(tempString);
+            boolVar.insert(tempString);
 #if BEHAVIOR_DEBUG
             spdlog::info(tempString);
 #endif
@@ -410,6 +446,7 @@ BehaviorVarSig::Sig* BehaviorVarSig::loadSigFromDir(std::string aDir)
 
     result->sigName = name;
     result->sigStrings = sig;
+    result->negSigStrings = negSig;
     result->syncBooleanVar = boolVector;
     result->syncFloatVar = floatVector;
     result->syncIntegerVar = intVector;
@@ -419,6 +456,5 @@ BehaviorVarSig::Sig* BehaviorVarSig::loadSigFromDir(std::string aDir)
 
 void BehaviorVarSig::patch(BSAnimationGraphManager* apManager, Actor* apActor)
 {
-    std::lock_guard<std::mutex> guard(mutex_lock);
     _patch(apManager, apActor);
 }
