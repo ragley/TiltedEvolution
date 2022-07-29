@@ -24,6 +24,9 @@ This fork added functionality to synchronize actor with modded animation graph d
 2. Download the files provided (Reborn.zip).
 3. Extact the files to STR installation folder.
 
+A patch is be provided for NEMESIS. Run nemesis with this patch or else you will slide around.
+NOTE : Do not forget to run NEMESIS with the patch provided. This patch is MANDATORY.
+
 ## Modders
 This section provide modders with the resource to start. The functionality for modders has been described in earlier section. This section describe how to do it. The structure type for a patch for this fork is very simple. [root] folder refers to where the STR is installed (e.g. Data/SkyrimTogetherReborn). 
 
@@ -53,9 +56,6 @@ Creature behavior aren't tested yet as the one that made this fork is busy with 
 5. This fork won't make it to the official release. This fork will stay as is. 
 6. This fork won't make animation of remote player to be smoothly played. Expect lots of Jank and jazz.
 
-## Use with Nemesis
-A patch will be provided for NEMESIS. Run nemesis with this patch or else you will slide around.
-NOTE : Do not forget to run NEMESIS with the patch provided. 
 
 ## The future
 This fork will hopefully be made into a mod for STR if the developer of STR decided to implement a native modding API (akin to SKSE).
