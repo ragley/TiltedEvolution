@@ -30,3 +30,8 @@ void AnimationGraphDescriptorManager::Register(uint64_t aKey, AnimationGraphDesc
     m_descriptors[aKey] = std::move(aAnimationGraphDescriptor);
 }
 
+void AnimationGraphDescriptorManager::ReRegister(uint64_t aKey,
+                                                 AnimationGraphDescriptor aAnimationGraphDescriptor) noexcept
+{
+    m_descriptors[aKey] = std::move(aAnimationGraphDescriptor);
+}

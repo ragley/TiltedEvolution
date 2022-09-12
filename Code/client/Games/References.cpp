@@ -196,18 +196,27 @@ void TESObjectREFR::SaveAnimationVariables(AnimationVariables& aVariables) const
 
             auto pDescriptor =
                 AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
+            if (!BehaviorVarSig::Get()->isAddPatched)
+            {
+                BehaviorVarSig::Get()->isAddPatched = true;
+                for (auto add : BehaviorVarSig::Get()->addPool)
+                {
+                    spdlog::info("patching hash {}", add.mHash);
 
-            if (!pDescriptor)
+                    BehaviorVarSig::Get()->patchAdd(add);
+                }
+            }
+            if (!pDescriptor && BehaviorVarSig::Get()->failedSig.find(pExtendedActor->GraphDescriptorHash) ==
+                                    BehaviorVarSig::Get()->failedSig.end())
             {
                 std::lock_guard guard(mutex_lock);
                 uint32_t hexFormID = pActor->formID;
-                if (BehaviorVarSig::Get()->failedSig.find(pExtendedActor->GraphDescriptorHash) !=
-                    BehaviorVarSig::Get()->failedSig.end())
-                    spdlog::info("animation description not found for formid {:X} with hash {}", hexFormID,
-                                 pExtendedActor->GraphDescriptorHash);
+                spdlog::info("animation description not found for formid {:X} with hash {}", hexFormID,
+                             pExtendedActor->GraphDescriptorHash);
                 BehaviorVarSig::Get()->patch(pManager, pActor);
                 pDescriptor = AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
             }
+
 
             if (!pDescriptor)
                 return;
@@ -281,16 +290,25 @@ void TESObjectREFR::LoadAnimationVariables(const AnimationVariables& aVariables)
             {
             ::Get()->patch(mpActor, pManager); 
             }*/
-            if (!pDescriptor)
+            if (!BehaviorVarSig::Get()->isAddPatched)
+            {
+                BehaviorVarSig::Get()->isAddPatched = true;
+                for (auto add : BehaviorVarSig::Get()->addPool)
+                {
+                    spdlog::info("patching hash {}", add.mHash);
+
+                    BehaviorVarSig::Get()->patchAdd(add);
+                }
+            }
+
+            if (!pDescriptor && BehaviorVarSig::Get()->failedSig.find(pExtendedActor->GraphDescriptorHash) ==
+                                    BehaviorVarSig::Get()->failedSig.end())
             {
                 std::lock_guard guard(mutex_lock);
                 uint32_t hexFormID = pActor->formID;
-                if (BehaviorVarSig::Get()->failedSig.find(pExtendedActor->GraphDescriptorHash) !=
-                    BehaviorVarSig::Get()->failedSig.end())
-                    spdlog::info("animation description not found for formid {:X} with hash {}", hexFormID,
-                             pExtendedActor->GraphDescriptorHash);
+                spdlog::info("animation description not found for formid {:X} with hash {}", hexFormID, pExtendedActor->GraphDescriptorHash);
                 BehaviorVarSig::Get()->patch(pManager, pActor);
-                pDescriptor = AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
+                pDescriptor =  AnimationGraphDescriptorManager::Get().GetDescriptor(pExtendedActor->GraphDescriptorHash);
             }
             
             if (!pDescriptor)
