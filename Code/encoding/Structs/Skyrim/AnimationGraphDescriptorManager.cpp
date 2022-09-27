@@ -71,5 +71,6 @@ AnimationGraphDescriptorManager::AnimationGraphDescriptorManager() noexcept
         AnimationGraphDescriptor_Spriggan initAnimationGraphDescriptor_Spriggan(*this);
         AnimationGraphDescriptor_Mudcrab initAnimationGraphDescriptor_Mudcrab(*this);
         AnimationGraphDescriptor_Rabbit initAnimationGraphDescriptor_Rabbit(*this);
+
     });
 }
