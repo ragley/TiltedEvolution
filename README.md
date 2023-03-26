@@ -1,6 +1,6 @@
 # Tilted Online Nemesis
 
-This is a fork of ragley's nemesis fork patched for STR 1.4.1. Includes TDM, TUDM and dragon behavior patches.
+This is a fork of Tiltedphoques Multiplayer Mod for STR. This fork is patched to use Nemesis patched behaviors SkyrimSE 1.6.640, STR 1.4.1. Includes TDM, TUDM and dragon behavior patches.
 
 Sometimes animations still don't sync, restarting game+server or rerunning Nemesis and syncing the output with your friends can fix it in most cases.
 
