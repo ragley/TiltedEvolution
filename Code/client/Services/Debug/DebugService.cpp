@@ -52,6 +52,8 @@
 #include <BSGraphics/BSGraphicsRenderer.h>
 #include <Interface/UI.h>
 
+#include <Messages/SendChatMessageRequest.h>
+
 // TODO: ft
 #if TP_SKYRIM64
 #include <Camera/PlayerCamera.h>
@@ -201,16 +203,14 @@ void DebugService::OnUpdate(const UpdateEvent& acUpdateEvent) noexcept
     else
         s_f7Pressed = false;
 
-    if (GetAsyncKeyState(VK_F8) & 0x01)
+    if (GetAsyncKeyState(VK_F8))
     {
         if (!s_f8Pressed)
         {
             s_f8Pressed = true;
 
-            // m_world.GetOverlayService().Reload();
-            auto* pPlayer = PlayerCharacter::Get();
-            spdlog::info("{}", pPlayer->formID);
-            pPlayer->UnEquipAll();
+            // todo
+            //CalendarService::SetTime(8, 0, 0);
         }
     }
     else
