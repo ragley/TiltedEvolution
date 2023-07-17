@@ -327,12 +327,12 @@ void GameServer::BindServerCommands()
 
     m_commands.RegisterCommand<>("quit", "Stop the server", [&](Console::ArgStack&) { Kill(); });
 
-    m_commands.RegisterCommand<int, int>(
+    m_commands.RegisterCommand<int64_t, int64_t>(
         "SetTime", "Set ingame hour and minute", [&](Console::ArgStack& aStack) {
             auto out = spdlog::get("ConOut");
 
-            auto hour = aStack.Pop<int>();
-            auto minute = aStack.Pop<int>();
+            auto hour = aStack.Pop<int64_t>();
+            auto minute = aStack.Pop<int64_t>();
             auto timescale = m_pWorld->GetCalendarService().GetTimeScale();
 
             bool time_set_successfully = m_pWorld->GetCalendarService().SetTime(hour, minute, timescale);
@@ -806,8 +806,8 @@ void GameServer::HandleAuthenticationRequest(const ConnectionId_t aConnectionId,
         serverResponse.PlayerId = pPlayer->GetId();
 
         auto modList = PrettyPrintModList(acRequest->UserMods.ModList);
-        spdlog::info("New player '{}' [{:x}] connected with {} mods\n\t: {}", pPlayer->GetUsername().c_str(),
-                     aConnectionId, acRequest->UserMods.ModList.size(), modList.c_str());
+        spdlog::info("New player '{}' [{:x}] connected with {} mods\n\t", pPlayer->GetUsername().c_str(), aConnectionId,
+                     acRequest->UserMods.ModList.size());
 
         serverResponse.Settings = GetSettings();
 

@@ -52,6 +52,8 @@
 #include <BSGraphics/BSGraphicsRenderer.h>
 #include <Interface/UI.h>
 
+#include <Messages/SendChatMessageRequest.h>
+
 // TODO: ft
 #if TP_SKYRIM64
 #include <Camera/PlayerCamera.h>
@@ -168,7 +170,7 @@ void DebugService::OnUpdate(const UpdateEvent& acUpdateEvent) noexcept
         {
             s_f6Pressed = true;
 
-            static char s_address[256] = "127.0.0.1:10578";
+            static char s_address[256] = "10.0.0.10:10578";
             if (!m_transport.IsOnline())
                 m_transport.Connect(s_address);
             else
@@ -191,7 +193,7 @@ void DebugService::OnUpdate(const UpdateEvent& acUpdateEvent) noexcept
         {
             s_f7Pressed = true;
 
-            static char s_address[256] = "de.playtogether.gg:10100";
+            static char s_address[256] = "10.10.10.10:10578";
             if (!m_transport.IsOnline())
                 m_transport.Connect(s_address);
             else
@@ -201,16 +203,17 @@ void DebugService::OnUpdate(const UpdateEvent& acUpdateEvent) noexcept
     else
         s_f7Pressed = false;
 
-    if (GetAsyncKeyState(VK_F8) & 0x01)
+    if (GetAsyncKeyState(VK_F8))
     {
         if (!s_f8Pressed)
         {
             s_f8Pressed = true;
 
-            // m_world.GetOverlayService().Reload();
-            auto* pPlayer = PlayerCharacter::Get();
-            spdlog::info("{}", pPlayer->formID);
-            pPlayer->UnEquipAll();
+            SendChatMessageRequest messageRequest;
+            messageRequest.MessageType = static_cast<ChatMessageType>(0);
+            messageRequest.ChatMessage = "settime 8 00";
+
+            m_transport.Send(messageRequest);
         }
     }
     else
